@@ -1,12 +1,10 @@
-import data from "../../data/data.ts";
-
 export interface IProduct {
     id: number,
     name: string,
     category: string,
     brand: string,
     price: number,
-    currency: "HUF" | "EUR"
+    currency: string,
     stock: number,
     rating: number,
     active: boolean,
@@ -20,24 +18,14 @@ class Product implements IProduct {
     #category: string;
     #brand: string;
     #price: number;
-    #currency: "HUF" | "EUR";
+    #currency: string;
     #stock: number;
     #rating: number;
     #active: boolean;
     #description: string;
     #image: string;
-    constructor(id: number, name: string, category: string, brand: string, price: number, currency: "HUF" | "EUR", stock: number, rating: number, active: boolean, description: string, image: string) {
-        this.#id = id;
-        this.#name = name;
-        this.#category = category;
-        this.#brand = brand;
-        this.#price = price;
-        this.#currency = currency;
-        this.#stock = stock;
-        this.#rating = rating;
-        this.#active = active;
-        this.#description = description;
-        this.#image = image;
+    constructor(pruductData: Partial<IProduct>) {
+        Object.assign(this, pruductData);
     }
 
     // Getters
@@ -107,11 +95,35 @@ class Product implements IProduct {
     }
 }
 
-const products: Product[] = [];
+export class ProductManager{
+    private _products: Product[] = [];
 
-for (const product of data){
-    const newProduct = new Product(product.id, product.name, product.category, product.brand, product.price, product.currency as "HUF" | "EUR", product.stock, product.rating, product.active, product.description, product.image);
-    products.push(newProduct);
+    constructor(initialProducts: Partial<IProduct>[] = []) {
+        this._products = initialProducts.map(p=> new Product(p));
+    }   
+
+    get allProducts(): Product[] {
+        return this._products.map(product => product.toJSON());
+    }
+
+    get products() : Product[] {
+        return this._products;
+    }
+
+    public addProduct(productData: Partial<IProduct>): Product {
+        const maxId = this._products.reduce((max, product) => Math.max(max, product.id), 0);
+        productData.id = maxId + 1;
+        const newProduct = new Product(productData);
+        this._products.push(productData as Product);
+        return productData as Product;
+    }
+
+    public modifyProduct(id: number, updatedData: Partial<IProduct>): Product | null {
+        const productIndex = this._products.findIndex(product => product.id === id);
+        if (productIndex === -1) {
+            return null;
+        }
+        Object.assign(this._products[productIndex], updatedData);
+        return this._products[productIndex];
+    }
 }
-
-export { Product, products };
