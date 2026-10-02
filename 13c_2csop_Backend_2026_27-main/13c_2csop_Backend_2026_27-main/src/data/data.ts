@@ -1,4 +1,4 @@
-export default [ 
+export default [
   {
     "id": 1,
     "name": "Laptop Pro 15",
