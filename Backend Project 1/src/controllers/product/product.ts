@@ -1,3 +1,5 @@
+import type { deleteProduct } from "./controller.ts";
+
 export interface IProduct {
   id: number;
   name: string;
@@ -142,10 +144,14 @@ export class ProductManager {
     this._products = initialProducts.map(p => new Product(p));
   } 
   get allProductsData(): IProduct[] {
-    return this._products.map(product => product.toJSON())  ;
+    return this._products.map(product => product.toJSON());
   }
   get products() : Product[] {
     return this._products;
+  }
+
+  public getById(id: number): Product | undefined {
+    return this._products.find((product) => product.id === id);
   }
 
   public addProduct(productData: Partial<IProduct>): Product {
@@ -154,4 +160,49 @@ export class ProductManager {
     this._products.push(productData as Product);
     return productData as Product;
   }
+
+  public updateProduct(id: number,productData: Partial<IProduct>/*not expecting is here as its auto generated*/): Product | undefined{
+    try{
+      const productIndex = this._products.findIndex((product) => product.id === id);
+      if(productIndex === -1){
+        const maxId = this._products.reduce((max, product) => Math.max(max, product.id), 0);
+        productData.id = maxId + 1; // Új ID generálása 
+        const newProduct = new Product(productData);
+        this._products.push(newProduct);
+        return newProduct;
+      }
+      productData.id = id;
+      const newProduct = new Product(productData);
+      this._products[productIndex] = newProduct;
+      return newProduct;
+    }
+    catch{
+      return undefined;
+    }
+  }
+
+  public patchProduct(id: number, productData: Partial<IProduct>): Product | undefined {
+    const productToPatch = this.products.find((product) => product.id === id);
+    if (!productToPatch) {
+      return undefined;
+    }
+    for (const key of Object.keys(productData) as (keyof IProduct)[]) {
+      const newValue = productData[key];
+      if(key != "id"){
+        if ((newValue !== undefined && newValue !== null) && newValue !== productToPatch[key]) {
+          Object.assign(productToPatch, { [key]: newValue });
+        }
+      }
+    }
+    return productToPatch;
+  }
+
+  public deleteProduct(id: number): boolean{
+    const productToDelete = this.products.find((product) => product.id === id);
+    if(!productToDelete)
+      return false;
+    this._products.splice(this._products.indexOf(productToDelete), 1);
+    return true;
+  }
+
 }
